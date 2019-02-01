@@ -1,11 +1,13 @@
 import React, {Component} from 'react';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
-import firebase from './initializers/firebase';
 import Avatar from '@material-ui/core/Avatar';
-
 import IconButton from '@material-ui/core/IconButton';
 import ExitToApp from '@material-ui/icons/ExitToApp';
+
+import firebase from './initializers/firebase';
+import { connect } from 'react-redux';
+import { saveToken, clearToken } from './initializers/action';
 
 class Login extends Component{
   constructor(props){
@@ -27,7 +29,10 @@ componentDidMount(){
         photoUrl: user.providerData[0].photoUrl
       })
     }else{
-
+      this.setState({
+        userLoggedIn: false,
+        photoUrl: ''
+      })
     }
   })
 }
@@ -38,14 +43,16 @@ componentDidMount(){
 
     firebase.auth().signInWithPopup(provider).then(result=>{
       let token = result.credential.accessToken;
+      this.props.saveToken(token);
     }).catch(err=>{
       console.log(err);
     })
   }
 
 logout(){
-  let msg = "Has intentado cerrar sesión";
-  console.log(msg);
+   firebase.auth().signOut().then(()=>{
+     this.props.clearToken();
+   });
 }
 
 loginButton(){
@@ -60,15 +67,31 @@ loginButton(){
 
   render(){
     return(
-      <div className={this.props.classes.container}>
+      <div>
+      <p>{this.props.token}</p>
       {this.loginButton()}
       </div>
     );
   }
 }
-export default withStyles({
-  container:{
-    display: 'flex',
-    flexDirection: 'row'
+
+const mapStateToProps = (state)=>{
+  return{
+    token: state.token
   }
-})(Login);
+}
+
+const mapDispatchToProps = {
+  saveToken,
+  clearToken
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Login);
+
+
+// withStyles({
+//   container:{
+//     display: 'flex',
+//     flexDirection: 'row'
+//   }
+// })(Login);
